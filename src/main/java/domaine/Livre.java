@@ -1,3 +1,5 @@
+package domaine;
+
 import java.util.Objects;
 
 public class Livre {
