@@ -1,36 +1,54 @@
 package domaine;
 
 import java.util.Objects;
+import exception.LivreIndisponibleException;
 
-public class Livre {
+public class Livre implements AvecIdentifiant {
+    private Long id;
     private String titre;
     private String auteur;
-    private String isbn;
-    private int exemplairesTotal = 10;
-    private int exemplairesDisponibles = 5;
+    private final String isbn;
+    private final int exemplairesTotal;
+    private int exemplairesDisponibles;
 
-    public Livre(String titre, String auteur, String isbn) {
-        this.titre = titre;
-        this.auteur = auteur;
-        this.isbn = isbn;
+    public Livre(String titre, String auteur, String isbn, int exemplairesTotal) {
+        this.titre = Verifications.exigerNonVide(titre, "titre");
+        this.auteur = Verifications.exigerNonVide(auteur, "auteur");
+        this.isbn = Verifications.exigerNonVide(isbn, "isbn");
+        if (exemplairesTotal < 1) {
+            throw new IllegalArgumentException("Un livre doit avoir au moins 1 exemplaire");
+        }
+        this.exemplairesTotal = exemplairesTotal;
+        this.exemplairesDisponibles = exemplairesTotal; // au départ, tout est en rayon
     }
 
     public boolean estDisponible() {
         return exemplairesDisponibles > 0;
     }
+
     public void emprunterUnExemplaire() {
-        if (estDisponible()) {
-            exemplairesDisponibles--;
+        if (!estDisponible()) {
+            throw new LivreIndisponibleException(titre);
         }
+        exemplairesDisponibles--;
     }
 
     public void rendreUnExemplaire() {
-        if (exemplairesDisponibles < exemplairesTotal) {
-            exemplairesDisponibles++;
+        if (exemplairesDisponibles >= exemplairesTotal) {
+            throw new IllegalStateException(
+                    "Tous les exemplaires de « " + titre + " » sont déjà en rayon");
         }
-        else {
-            System.out.println("Exemplaires au complet");
-        }
+        exemplairesDisponibles++;
+    }
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getTitre() {
@@ -53,46 +71,37 @@ public class Livre {
         return isbn;
     }
 
-    public void setIsbn(String isbn) {
-        if (isbn == null || isbn.length() != 11) {
-            System.out.println("ISBN incorrect");
-        }
-        this.isbn = isbn;
-    }
 
     public int getExemplairesTotal() {
         return exemplairesTotal;
     }
 
-    public void setExemplairesTotal(int exemplairesTotal) {
-        if  (exemplairesTotal < 0) {
-            System.out.println("Nombre d'exemplaire doit être supérieur ou égale à 0");
-        }
-        this.exemplairesTotal = exemplairesTotal;
-    }
 
     public int getExemplairesDisponibles() {
         return exemplairesDisponibles;
     }
 
-    public void setExemplairesDisponibles(int exemplairesDisponibles) {
-        if (exemplairesDisponibles < exemplairesTotal && exemplairesDisponibles >= 0) {
-            this.exemplairesDisponibles = exemplairesDisponibles;
+
+    /** Deux livres sont les mêmes s'ils ont le même ISBN (identité « naturelle » du livre). */
+    @Override
+    public boolean equals(Object autre) {
+        if (this == autre) {
+            return true;
         }
-        else {
-            System.out.println("Impossible");
+        if (!(autre instanceof Livre)) {
+            return false;
         }
+        return isbn.equals(((Livre) autre).isbn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(titre, auteur, isbn);
+        return Objects.hash(isbn);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Livre livre = (Livre) o;
-        return Objects.equals(titre, livre.titre) && Objects.equals(auteur, livre.auteur) && Objects.equals(isbn, livre.isbn);
+    public String toString() {
+        return "Livre{id=" + id + ", titre='" + titre + "', auteur='" + auteur + "', isbn='" + isbn
+                + "', disponibles=" + exemplairesDisponibles + "/" + exemplairesTotal + "}";
     }
 }

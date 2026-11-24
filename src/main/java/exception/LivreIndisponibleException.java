@@ -1,7 +1,7 @@
 package exception;
 
 public class LivreIndisponibleException extends BibliothequeException {
-    public LivreIndisponibleException(String message) {
-        super(message);
+    public LivreIndisponibleException(String titre) {
+        super("Aucun exemplaire disponible de « "+titre+" »");
     }
 }

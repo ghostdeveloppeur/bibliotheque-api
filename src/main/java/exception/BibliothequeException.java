@@ -1,6 +1,6 @@
 package exception;
 
-public class BibliothequeException extends Exception {
+public class BibliothequeException extends RuntimeException {
     public BibliothequeException(String message) {
         super(message);
     }
