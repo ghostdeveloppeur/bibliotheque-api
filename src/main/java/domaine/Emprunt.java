@@ -1,18 +1,20 @@
+package domaine;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 public class Emprunt {
-    Livre livre;
-    Membre membre;
-    final LocalDate dateEmprunt;
-    final LocalDate dateRetourPrevue;
-    LocalDate dateRetourEffective = null;
+    private Livre livre;
+    private Membre membre;
+    private final LocalDate dateEmprunt;
+    private final LocalDate dateRetourPrevue;
+    private LocalDate dateRetourEffective = null;
 
     public Emprunt(Livre livre, Membre membre) {
         this.livre = livre;
         this.membre = membre;
         this.dateEmprunt = LocalDate.now();
-        this.dateRetourPrevue = this.dateEmprunt.plusDays(14);
+        this.dateRetourPrevue = this.dateEmprunt.plusDays(ReglesBibliotheque.DUREE_EMPRUNT_JOURS);
     }
 
     public boolean estEnCours() {
