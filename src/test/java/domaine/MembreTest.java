@@ -4,8 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MembreTest {
 
@@ -22,11 +21,21 @@ class MembreTest {
     }
 
     @Test
+    void leConstructeurRefuseUnEmailCommencantParArobase() {
+        assertThrows(IllegalArgumentException.class, () -> new Membre("Lamine", "@lamine.example.com", DATE));
+    }
+
+    @Test
     void deuxMembresAvecLeMemeEmailSontEgauxQuelleQueSoitLaCasse() {
         Membre a = new Membre("Lamine", "lamine@example.com", DATE);
         Membre b = new Membre("L. Kourouma", "LAMINE@example.com", DATE);
 
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void unMembreValideCreeSansErreur() {
+        assertDoesNotThrow(() -> new Membre("Lamine", "lamine@example.com", DATE));
     }
 }
