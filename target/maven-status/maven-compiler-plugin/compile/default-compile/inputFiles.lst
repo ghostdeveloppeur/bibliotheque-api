@@ -1,0 +1,16 @@
+D:\CodingProjects\bibilotheque-api\src\main\java\Demonstration.java
+D:\CodingProjects\bibilotheque-api\src\main\java\domaine\AvecIdentifiant.java
+D:\CodingProjects\bibilotheque-api\src\main\java\domaine\Emprunt.java
+D:\CodingProjects\bibilotheque-api\src\main\java\domaine\Livre.java
+D:\CodingProjects\bibilotheque-api\src\main\java\domaine\Membre.java
+D:\CodingProjects\bibilotheque-api\src\main\java\domaine\ReglesBibliotheque.java
+D:\CodingProjects\bibilotheque-api\src\main\java\domaine\Verifications.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\BibliothequeException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\DoublonException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\EmpruntDejaRenduException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\EmpruntIntrouvableException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\LimiteEmpruntsAtteinteException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\LivreIndisponibleException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\LivreIntrouvableException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\exception\MembreIntrouvableException.java
+D:\CodingProjects\bibilotheque-api\src\main\java\service\Bibliotheque.java

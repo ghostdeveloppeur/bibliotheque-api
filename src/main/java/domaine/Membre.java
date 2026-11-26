@@ -1,17 +1,46 @@
 package domaine;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Objects;
 
-public class Membre {
-    String nom;
-    String prenom;
-    final LocalDate dateInscription;
+/**
+ * Une personne inscrite à la bibliothèque.
+ *
+ * La classe reste volontairement simple : le nombre d'emprunts en cours d'un membre n'est PAS stocké ici.
+ * Il se calcule à partir des emprunts (voir Bibliotheque), pour qu'il ne puisse jamais être faux.
+ */
+public class Membre implements AvecIdentifiant {
 
-    public Membre(String nom, String prenom) {
-        this.nom = nom;
-        this.prenom = prenom;
-        this.dateInscription = LocalDate.now();
+    private Long id;
+    private String nom;
+    private final String email;
+    private final LocalDate dateInscription;
+
+    public Membre(String nom, String email, LocalDate dateInscription) {
+        this.nom = Verifications.exigerNonVide(nom, "nom");
+        this.email = verifierEmail(email);
+        this.dateInscription = Verifications.exigerPresent(dateInscription, "dateInscription");
+    }
+
+    /** Validation volontairement simple : un « @ » ni en première ni en dernière position. */
+    private static String verifierEmail(String email) {
+        String nettoye = Verifications.exigerNonVide(email, "email");
+        int arobase = nettoye.indexOf('@');
+        if (arobase < 1 || arobase == nettoye.length() - 1) {
+            throw new IllegalArgumentException("Email invalide : " + email);
+        }
+        return nettoye;
+    }
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getNom() {
@@ -19,31 +48,36 @@ public class Membre {
     }
 
     public void setNom(String nom) {
-        this.nom = nom;
+        this.nom = Verifications.exigerNonVide(nom, "nom");
     }
 
-    public String getPrenom() {
-        return prenom;
-    }
-
-    public void setPrenom(String prenom) {
-        this.prenom = prenom;
+    public String getEmail() {
+        return email;
     }
 
     public LocalDate getDateInscription() {
         return dateInscription;
     }
 
+    /** Deux membres sont les mêmes s'ils ont le même email (sans tenir compte des majuscules). */
     @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Membre membre = (Membre) o;
-        return Objects.equals(nom, membre.nom) && Objects.equals(prenom, membre.prenom) && Objects.equals(dateInscription, membre.dateInscription);
+    public boolean equals(Object autre) {
+        if (this == autre) {
+            return true;
+        }
+        if (!(autre instanceof Membre)) {
+            return false;
+        }
+        return email.equalsIgnoreCase(((Membre) autre).email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nom, prenom, dateInscription);
+        return Objects.hash(email.toLowerCase(Locale.ROOT));
+    }
+
+    @Override
+    public String toString() {
+        return "Membre{id=" + id + ", nom='" + nom + "', email='" + email + "'}";
     }
 }
-
