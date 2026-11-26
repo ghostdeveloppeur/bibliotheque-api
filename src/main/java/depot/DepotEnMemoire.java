@@ -28,7 +28,7 @@ public class DepotEnMemoire<T extends AvecIdentifiant> implements Depot<T>{
 
     @Override
     public List<T> listerTous() {
-        return new ArrayList<>(elements.values()); // copie : l'appelant ne peut pas vider notre Map
+        return new ArrayList<T>(elements.values()); // copie : l'appelant ne peut pas vider notre Map
     }
 
     @Override
