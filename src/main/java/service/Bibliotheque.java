@@ -59,6 +59,7 @@ public class Bibliotheque {
     public Membre trouverMembre(Long id) {
         return depotMembres.trouverParId(id).orElseThrow(() -> new MembreIntrouvableException(id));
     }
+
     public List<Membre> listerMembres() {
         return depotMembres.listerTous();
     }
