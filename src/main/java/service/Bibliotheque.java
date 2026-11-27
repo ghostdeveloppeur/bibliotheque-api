@@ -5,11 +5,7 @@ import domaine.Emprunt;
 import domaine.Livre;
 import domaine.Membre;
 import domaine.ReglesBibliotheque;
-import exception.DoublonException;
-import exception.LivreIndisponibleException;
-import exception.LivreIntrouvableException;
-import exception.MembreIntrouvableException;
-import exception.LimiteEmpruntsAtteinteException;
+import exception.*;
 
 import java.lang.reflect.Member;
 import java.time.LocalDate;
@@ -101,4 +97,32 @@ public class Bibliotheque {
 
         return emprunt;
     }
+
+    public Emprunt trouverEmprunt(Long idEmprunt) {
+        return depotEmprunts.trouverParId(idEmprunt).orElseThrow(() ->
+                new EmpruntIntrouvableException(idEmprunt));
+    }
+
+    /** Enregistre le retour d'un livre. Refuse un emprunt déjà rendu. */
+    public Emprunt rendre(Long idEmprunt, LocalDate aujourdhui) {
+        Emprunt emprunt = trouverEmprunt(idEmprunt);
+        emprunt.marquerCommeRendu(aujourdhui);
+        emprunt.getLivre().rendreUnExemplaire();
+        depotLivres.enregistrer(emprunt.getLivre());
+        depotEmprunts.enregistrer(emprunt);
+        return emprunt;
+    }
+
+    /** Les emprunts en retard à la date donnée. */
+    public List<Emprunt> empruntsEnRetard(LocalDate aujourdhui) {
+        return depotEmprunts.listerTous().stream().filter(e -> e.estEnRetard(aujourdhui)).toList();
+    }
+
+    /** Tous les emprunts d'un membre, rendus ou non. */
+    public List<Emprunt> historiqueDuMembre(Long idMembre) {
+        trouverMembre(idMembre);
+        return depotEmprunts.listerTous().stream().filter(e -> e.getMembre().getId().equals(idMembre)).toList();
+    }
+
+
 }

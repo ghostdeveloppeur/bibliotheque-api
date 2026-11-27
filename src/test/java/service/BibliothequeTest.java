@@ -33,7 +33,9 @@ public class BibliothequeTest {
         petitPrince = bibliotheque.ajouterLivre("Le Petit Prince", "Antoine de Saint-Exupéry", "9782070612758", 1);
     }
 
-    /** Crée n livres distincts, avec un seul exemplaire chacun, et renvoie leurs identifiants. */
+    /**
+     * Crée n livres distincts, avec un seul exemplaire chacun, et renvoie leurs identifiants.
+     */
     private List<Long> creerLivres(int n) {
         List<Long> ids = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -120,6 +122,83 @@ public class BibliothequeTest {
     @Test
     void emprunterUnLivreInconnuLeveLivreIntrouvableException() {
         assertThrows(LivreIntrouvableException.class,
-                () -> bibliotheque.emprunter(lamine.getId(),999L, AUJOURDHUI));
+                () -> bibliotheque.emprunter(lamine.getId(), 999L, AUJOURDHUI));
+    }
+
+    @Test
+    void rendreUnLivreLibereUnExemplaireEtTermineLEmprunt() {
+        Emprunt emprunt = bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI);
+
+        bibliotheque.rendre(petitPrince.getId(), AUJOURDHUI.plusDays(3));
+
+        assertEquals(1, petitPrince.getExemplairesDisponibles());
+        assertTrue(bibliotheque.empruntsEnCours().isEmpty());
+    }
+
+    @Test
+    void rendreLibereLaPlaceDansLaLimiteDuMembre() {
+        int max = ReglesBibliotheque.MAX_EMPRUNTS_PAR_MEMBRE;
+        List<Long> livres = creerLivres(max + 1);
+        Emprunt premier = bibliotheque.emprunter(lamine.getId(), livres.get(0), AUJOURDHUI);
+        for (int i = 1; i < max; i++) {
+            bibliotheque.emprunter(lamine.getId(), livres.get(i), AUJOURDHUI);
+        }
+
+        bibliotheque.rendre(premier.getId(), AUJOURDHUI);
+
+        // Le membre repasse sous la limite : un nouvel emprunt est de nouveau possible.
+        bibliotheque.emprunter(lamine.getId(), livres.get(max), AUJOURDHUI);
+        assertEquals(max, bibliotheque.empruntsEnCoursDuMembre(lamine.getId()).size());
+    }
+
+    @Test
+    void rendreDeuxFoisLeMemeEmpruntEstRefuseEtNeRemetPasUnExemplaireDeTrop() {
+        Emprunt emprunt = bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI);
+        bibliotheque.rendre(emprunt.getId(), AUJOURDHUI);
+
+        assertThrows(EmpruntDejaRenduException.class, () -> bibliotheque.rendre(emprunt.getId(), AUJOURDHUI));
+        assertEquals(1, petitPrince.getExemplairesDisponibles());
+    }
+
+    @Test
+    void rendreUnEmpruntInconnuLeveEmpruntIntrouvableException() {
+        assertThrows(EmpruntIntrouvableException.class, () -> bibliotheque.rendre(999L, AUJOURDHUI));
+    }
+
+    @Test
+    void empruntsEnRetardNeContientQueLesEmpruntsEnCoursDontLEcheanceEstDepassee() {
+        Livre autre = bibliotheque.ajouterLivre("L'Étranger", "Camus", "9782070360024", 1);
+        Emprunt ancien = bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI);
+        Emprunt recent = bibliotheque.emprunter(lamine.getId(), autre.getId(), AUJOURDHUI.plusDays(10));
+
+        LocalDate date = ancien.getDateRetourPrevue().plusDays(1);
+        List<Emprunt> enRetard = bibliotheque.empruntsEnRetard(date);
+
+        assertEquals(List.of(ancien), enRetard);
+        assertFalse(enRetard.contains(recent));
+    }
+
+    @Test
+    void empruntsEnRetardIgnoreLesEmpruntsDejaRendus() {
+        Emprunt emprunt = bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI);
+        bibliotheque.rendre(emprunt.getId(), AUJOURDHUI.plusDays(1));
+
+        assertTrue(bibliotheque.empruntsEnRetard(AUJOURDHUI.plusDays(100)).isEmpty());
+    }
+
+    @Test
+    void historiqueDuMembreContientLesEmpruntsRendusEtEnCours() {
+        Livre autre = bibliotheque.ajouterLivre("L'Étranger", "Camus", "9782070360024", 1);
+        Emprunt rendu = bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI);
+        bibliotheque.rendre(rendu.getId(), AUJOURDHUI);
+        bibliotheque.emprunter(lamine.getId(), autre.getId(), AUJOURDHUI);
+
+        assertEquals(2, bibliotheque.historiqueDuMembre(lamine.getId()).size());
+        assertEquals(1, bibliotheque.empruntsEnCoursDuMembre(lamine.getId()).size());
+    }
+
+    @Test
+    void historiqueDUnMembreInconnuLeveMembreIntrouvableException() {
+        assertThrows(MembreIntrouvableException.class, () -> bibliotheque.historiqueDuMembre(999L));
     }
 }
