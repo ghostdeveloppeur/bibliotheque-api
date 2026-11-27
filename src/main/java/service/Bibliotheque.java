@@ -4,12 +4,16 @@ import depot.Depot;
 import domaine.Emprunt;
 import domaine.Livre;
 import domaine.Membre;
+import domaine.ReglesBibliotheque;
 import exception.DoublonException;
+import exception.LivreIndisponibleException;
 import exception.LivreIntrouvableException;
 import exception.MembreIntrouvableException;
+import exception.LimiteEmpruntsAtteinteException;
 
 import java.lang.reflect.Member;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public class Bibliotheque {
@@ -59,8 +63,42 @@ public class Bibliotheque {
     public Membre trouverMembre(Long id) {
         return depotMembres.trouverParId(id).orElseThrow(() -> new MembreIntrouvableException(id));
     }
-
     public List<Membre> listerMembres() {
         return depotMembres.listerTous();
+    }
+
+    /** Tous les emprunts non rendus. */
+    public List<Emprunt> empruntsEnCours() {
+        return depotEmprunts.listerTous().stream().filter(Emprunt::estEnCours).toList();
+    }
+
+    public List<Emprunt> empruntsEnCoursDuMembre(Long idMembre) {
+        trouverMembre(idMembre);
+        return empruntsEnCours().stream()
+                .filter(e -> e.getMembre().getId().equals(idMembre))
+                .toList();
+    }
+
+    /**
+     * Fait emprunter un livre à un membre.
+     * Ordre des vérifications : membre existant, livre existant, livre disponible, limite du membre.
+     */
+    public Emprunt emprunter(Long idMembre, Long idLivre, LocalDate aujourdhui) {
+        Membre membre = trouverMembre(idMembre);
+        Livre livre = trouverLivre(idLivre);
+
+        if (!livre.estDisponible()) {
+            throw new LivreIndisponibleException(livre.getTitre());
+        }
+        if (empruntsEnCoursDuMembre(idMembre).size() >= ReglesBibliotheque.MAX_EMPRUNTS_PAR_MEMBRE) {
+            throw new LimiteEmpruntsAtteinteException(membre.getNom(), ReglesBibliotheque.MAX_EMPRUNTS_PAR_MEMBRE);
+        }
+        livre.emprunterUnExemplaire();
+
+        Emprunt emprunt = new Emprunt(livre, membre, aujourdhui);
+        depotLivres.enregistrer(livre);
+        depotEmprunts.enregistrer(emprunt);
+
+        return emprunt;
     }
 }

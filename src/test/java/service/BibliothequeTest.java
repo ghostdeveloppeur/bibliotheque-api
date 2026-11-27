@@ -5,10 +5,7 @@ import domaine.Emprunt;
 import domaine.Livre;
 import domaine.Membre;
 import domaine.ReglesBibliotheque;
-import exception.DoublonException;
-import exception.LivreIndisponibleException;
-import exception.LivreIntrouvableException;
-import exception.MembreIntrouvableException;
+import exception.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +33,15 @@ public class BibliothequeTest {
         petitPrince = bibliotheque.ajouterLivre("Le Petit Prince", "Antoine de Saint-Exupéry", "9782070612758", 1);
     }
 
+    /** Crée n livres distincts, avec un seul exemplaire chacun, et renvoie leurs identifiants. */
+    private List<Long> creerLivres(int n) {
+        List<Long> ids = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            ids.add(bibliotheque.ajouterLivre("Livre " + i, "Auteur", "isbn-" + i, 1).getId());
+        }
+        return ids;
+    }
+
     @Test
     void ajouterUnLivreAvecUnIsbnDejaPresentEstRefuse() {
         assertThrows(DoublonException.class,
@@ -58,5 +64,62 @@ public class BibliothequeTest {
     @Test
     void trouverUnMembreInconnuLeveMembreIntrouvableException() {
         assertThrows(MembreIntrouvableException.class, () -> bibliotheque.trouverMembre(999L));
+    }
+
+    @Test
+    void empruntReussiCreeUnEmpruntEnCoursEtReduitLeStock() {
+        Emprunt emprunt = bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI);
+
+        assertTrue(emprunt.estEnCours());
+        assertEquals(AUJOURDHUI.plusDays(ReglesBibliotheque.DUREE_EMPRUNT_JOURS), emprunt.getDateRetourPrevue());
+        assertEquals(0, petitPrince.getExemplairesDisponibles());
+        assertEquals(1, bibliotheque.empruntsEnCours().size());
+    }
+
+    @Test
+    void emprunterUnLivreIndisponibleEstRefuse() {
+        Membre sara = bibliotheque.inscrireMembre("Sara", "sara@example.com", AUJOURDHUI);
+        bibliotheque.emprunter(lamine.getId(), petitPrince.getId(), AUJOURDHUI); // dernier exemplaire
+
+        assertThrows(LivreIndisponibleException.class, () -> bibliotheque.emprunter(sara.getId(), petitPrince.getId(), AUJOURDHUI));
+    }
+
+    @Test
+    void leMembreNePeutPasDepasserLeNombreMaximumDEmpruntsEnCours() {
+        int max = ReglesBibliotheque.MAX_EMPRUNTS_PAR_MEMBRE;
+        List<Long> livres = creerLivres(max + 1);
+        for (int i = 0; i < max; i++) {
+            bibliotheque.emprunter(lamine.getId(), livres.get(i), AUJOURDHUI); // jusqu'au maximum : accepté
+        }
+
+        assertThrows(LimiteEmpruntsAtteinteException.class, () -> bibliotheque.emprunter(lamine.getId(), livres.get(max), null));
+    }
+
+    @Test
+    void unEmpruntRefuseNeModifiePasLeStock() {
+        int max = ReglesBibliotheque.MAX_EMPRUNTS_PAR_MEMBRE;
+        List<Long> livres = creerLivres(max + 1);
+        for (int i = 0; i < max; i++) {
+            bibliotheque.emprunter(lamine.getId(), livres.get(i), AUJOURDHUI);
+        }
+        Livre dernier = bibliotheque.trouverLivre(livres.get(max));
+
+        assertThrows(LimiteEmpruntsAtteinteException.class,
+                () -> bibliotheque.emprunter(lamine.getId(), dernier.getId(), AUJOURDHUI));
+
+        assertEquals(1, dernier.getExemplairesDisponibles()); // rien n'a été retiré du rayon
+        assertEquals(max, bibliotheque.empruntsEnCours().size()); // aucun emprunt fantôme
+    }
+
+    @Test
+    void emprunterAvecUnMembreInconnuLeveMembreIntrouvableException() {
+        assertThrows(MembreIntrouvableException.class,
+                () -> bibliotheque.emprunter(999L, petitPrince.getId(), AUJOURDHUI));
+    }
+
+    @Test
+    void emprunterUnLivreInconnuLeveLivreIntrouvableException() {
+        assertThrows(LivreIntrouvableException.class,
+                () -> bibliotheque.emprunter(lamine.getId(),999L, AUJOURDHUI));
     }
 }

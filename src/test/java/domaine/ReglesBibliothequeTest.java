@@ -9,6 +9,6 @@ public class ReglesBibliothequeTest {
     @DisplayName("S'assure que les deux valeurs sont strictement positives")
     void lesReglesChiffreesSontStrictementPositives() {
         assertTrue(ReglesBibliotheque.DUREE_EMPRUNT_JOURS > 0);
-        assertTrue(ReglesBibliotheque.MAX_EMPRUNT_PAR_MEMBRE > 0);
+        assertTrue(ReglesBibliotheque.MAX_EMPRUNTS_PAR_MEMBRE > 0);
     }
 }
